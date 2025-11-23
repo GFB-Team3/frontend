@@ -6,7 +6,7 @@ const categories = [
     "여행", "아트", "건축", "동물", "피트니스",
 ];
 
-export function Header({ onSearch, activeCategory, onCategoryChange, onProfileClick, onLoginClick, onCreateClick }) {
+export function Header({ onSearch, activeCategory, onCategoryChange, onProfileClick, onLoginClick, onCreateClick , onHomeClick}) {
     const { user, logout } = useUser();
 
     return (
@@ -23,10 +23,19 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
 
                     {/* 네비게이션 */}
                     <nav className="hidden md:flex gap-2">
-                        <button className="px-4 py-2 rounded-full bg-black text-white font-semibold">홈</button>
-                        <button className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors font-semibold">탐색</button>
+                        <button className="px-4 py-2 rounded-full bg-black text-white font-semibold">
+                            홈
+                        </button>
+
+                        <button className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors font-semibold">
+                            탐색
+                        </button>
+
                         {user && (
-                            <button onClick={onCreateClick} className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2 font-semibold">
+                            <button
+                                onClick={onCreateClick}
+                                className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2 font-semibold"
+                            >
                                 <Plus className="w-4 h-4" /> 만들기
                             </button>
                         )}
@@ -59,7 +68,9 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
                                     onClick={onProfileClick}
                                     className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300"
                                 >
-                                    <span className="font-bold text-gray-700">{user.name[0]}</span>
+                                    <span className="font-bold text-gray-700">
+                                      {(user.username?.[0] || user.email?.[0] || "U").toUpperCase()}
+                                    </span>
                                 </div>
                                 <button onClick={logout} className="text-xs text-red-500 hover:underline">로그아웃</button>
                             </div>
