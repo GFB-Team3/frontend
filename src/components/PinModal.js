@@ -1,18 +1,33 @@
-import { useState } from "react";
-import { X, Heart, Share2, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Heart, Share2, MoreHorizontal, Edit, Trash2, Download, Flag, Code, EyeOff, Search as SearchIcon } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
 
-// 아직 없는 PinMoreMenu 대신 임시로 주석 처리
-// import { PinMoreMenu } from "./PinMoreMenu";
-
 export function PinModal({ pin, onClose, onEdit, onDelete }) {
     const { user, savedPins, likedPins, savePin, unsavePin, likePin, unlikePin } = useUser();
+
+    // 메뉴를 껐다 켰다 할 스위치
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+    // 메뉴 바깥을 클릭하면 닫히게 하기 위한 참조
+    const menuRef = useRef(null);
 
     const isSaved = savedPins.includes(pin.id);
     const isLiked = likedPins.includes(pin.id);
     const isMyPin = user?.id === pin.authorId;
+
+    // 메뉴 바깥 클릭 감지 (메뉴 닫기 기능)
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMoreMenu(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleSave = () => {
         if (!user) {
@@ -46,6 +61,27 @@ export function PinModal({ pin, onClose, onEdit, onDelete }) {
         toast.success("링크가 복사되었습니다!");
     };
 
+    // ✨ 이미지 다운로드 기능 (진짜 작동함!)
+    const handleDownload = async () => {
+        try {
+            const response = await fetch(pin.imageUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `pinterest_download_${pin.id}.jpg`; // 파일명 설정
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success("이미지가 다운로드되었습니다.");
+            setShowMoreMenu(false);
+        } catch (error) {
+            console.error(error);
+            toast.error("다운로드에 실패했습니다.");
+        }
+    };
+
     return (
         <div
             className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 cursor-zoom-out"
@@ -68,7 +104,7 @@ export function PinModal({ pin, onClose, onEdit, onDelete }) {
                 <div className="md:w-1/2 flex flex-col h-full max-h-[90vh]">
                     {/* 상단 버튼들 */}
                     <div className="flex items-center justify-between p-6 sticky top-0 bg-white z-10">
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 relative" ref={menuRef}>
                             <button
                                 onClick={handleShare}
                                 className="p-3 hover:bg-gray-100 rounded-full transition-colors"
@@ -76,20 +112,69 @@ export function PinModal({ pin, onClose, onEdit, onDelete }) {
                             >
                                 <Share2 className="w-5 h-5" />
                             </button>
+
+                            {/* 👇 더보기 버튼 */}
                             <button
-                                onClick={() => toast("더 보기 메뉴는 준비 중입니다!")}
-                                className="p-3 hover:bg-gray-100 rounded-full transition-colors"
+                                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                                className={`p-3 rounded-full transition-colors ${showMoreMenu ? "bg-gray-100" : "hover:bg-gray-100"}`}
                             >
                                 <MoreHorizontal className="w-5 h-5" />
                             </button>
+
+                            {/* 👇 여기가 사진처럼 만든 드롭다운 메뉴입니다 */}
+                            {showMoreMenu && (
+                                <div className="absolute top-14 left-0 bg-white shadow-xl rounded-xl w-64 p-2 border border-gray-100 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    <div className="flex flex-col gap-1">
+                                        <p className="px-3 py-2 text-xs font-semibold text-gray-500">옵션</p>
+
+                                        <button
+                                            onClick={handleDownload}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-gray-100 rounded-lg text-sm font-semibold text-gray-900 flex items-center gap-3 transition-colors"
+                                        >
+                                            <Download className="w-4 h-4" /> 이미지 다운로드
+                                        </button>
+
+                                        <button
+                                            onClick={() => toast("유사한 핀을 더 찾아볼게요!")}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-gray-100 rounded-lg text-sm font-semibold text-gray-900 flex items-center gap-3 transition-colors"
+                                        >
+                                            <SearchIcon className="w-4 h-4" /> 유사한 핀 더 보기
+                                        </button>
+
+                                        <button
+                                            onClick={() => toast("이런 핀을 덜 보여드릴게요.")}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-gray-100 rounded-lg text-sm font-semibold text-gray-900 flex items-center gap-3 transition-colors"
+                                        >
+                                            <EyeOff className="w-4 h-4" /> 유사한 핀 덜 보기
+                                        </button>
+
+                                        <button
+                                            onClick={() => toast("신고가 접수되었습니다.")}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-gray-100 rounded-lg text-sm font-semibold text-gray-900 flex items-center gap-3 transition-colors"
+                                        >
+                                            <Flag className="w-4 h-4" /> 핀 신고
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`<img src="${pin.imageUrl}" />`);
+                                                toast.success("임베드 코드가 복사되었습니다!");
+                                            }}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-gray-100 rounded-lg text-sm font-semibold text-gray-900 flex items-center gap-3 transition-colors"
+                                        >
+                                            <Code className="w-4 h-4" /> 핀 임베드 코드 가져오기
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSave}
                                 className={`px-6 py-3 rounded-full transition-colors font-bold text-base ${isSaved
-                                    ? "bg-black text-white hover:bg-gray-800"
-                                    : "bg-red-600 text-white hover:bg-red-700"
+                                        ? "bg-black text-white hover:bg-gray-800"
+                                        : "bg-red-600 text-white hover:bg-red-700"
                                     }`}
                             >
                                 {isSaved ? "저장됨" : "저장"}
@@ -106,7 +191,6 @@ export function PinModal({ pin, onClose, onEdit, onDelete }) {
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold overflow-hidden">
-                                    {/* 이미지가 없으면 글자 첫 글자 표시 */}
                                     {pin.author ? pin.author[0] : "A"}
                                 </div>
                                 <div>
@@ -156,9 +240,6 @@ export function PinModal({ pin, onClose, onEdit, onDelete }) {
                     </div>
                 </div>
             </div>
-
-            {/* 더보기 메뉴는 아직 파일이 없어서 렌더링 안 함 */}
-            {/* {showMoreMenu && <PinMoreMenu ... />} */}
         </div>
     );
 }

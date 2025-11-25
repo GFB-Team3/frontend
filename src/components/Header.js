@@ -1,4 +1,4 @@
-import { Search, Bell, MessageCircle, User, LogOut, BookMarked, Plus } from "lucide-react";
+import { Search, Bell, MessageCircle, Plus } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 
 const categories = [
@@ -13,7 +13,7 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
         <header className="sticky top-0 bg-white z-40 border-b">
             <div className="px-4 py-3">
                 <div className="flex items-center gap-4">
-                    {/* 로고 */}
+                    {/* 로고 (클릭시 새로고침 = 홈 이동 효과) */}
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.reload()}>
                         <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                             <span className="text-white font-bold">P</span>
@@ -23,7 +23,7 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
 
                     {/* 네비게이션 */}
                     <nav className="hidden md:flex gap-2">
-                        <button className="px-4 py-2 rounded-full bg-black text-white font-semibold">홈</button>
+                        <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-full bg-black text-white font-semibold">홈</button>
                         <button className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors font-semibold">탐색</button>
                         {user && (
                             <button onClick={onCreateClick} className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2 font-semibold">
@@ -53,15 +53,18 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
                         </button>
 
                         {user ? (
-                            // 드롭다운 대신 간단한 프로필 버튼으로 대체 (에러 방지용)
                             <div className="flex items-center gap-2 ml-2">
+                                {/* 👇 여기가 중요! 프로필 클릭시 onProfileClick 실행 */}
                                 <div
                                     onClick={onProfileClick}
-                                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300"
+                                    className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 border border-transparent hover:border-gray-400 transition-all"
+                                    title="프로필 보기"
                                 >
-                                    <span className="font-bold text-gray-700">{user.name[0]}</span>
+                                    <span className="font-bold text-gray-700">{user.name?.[0] || "U"}</span>
                                 </div>
-                                <button onClick={logout} className="text-xs text-red-500 hover:underline">로그아웃</button>
+                                <button onClick={logout} className="text-xs text-gray-500 hover:text-red-600 hover:underline ml-1">
+                                    로그아웃
+                                </button>
                             </div>
                         ) : (
                             <button
