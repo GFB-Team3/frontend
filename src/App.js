@@ -8,16 +8,15 @@ import { PinCard } from "./components/PinCard";
 import { PinModal } from "./components/PinModal";
 import { CreatePinModal } from "./components/CreatePinModal";
 import { AuthModal } from "./components/AuthModal";
-import { LandingPage } from "./components/LandingPage"; // 랜딩 페이지 추가
+import { LandingPage } from "./components/LandingPage";
 import { UserProvider, useUser } from "./contexts/UserContext";
-// 맨 위 import 묶음에 이게 있어야 합니다.
-import { ProfilePage } from "./components/ProfilePage";
 
 // 아직 안 만든 건 임시 컴포넌트
 const EditProfileModal = ({ onClose }) => <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center" onClick={onClose}><div className="bg-white p-10 rounded">프로필 수정 모달 (준비중)</div></div>;
+const ProfilePage = ({ onPinClick }) => <div className="text-center py-10 text-2xl font-bold">여기는 프로필 페이지입니다</div>;
 const DeleteConfirmDialog = ({ onClose }) => null;
 
-// 기본 목 데이터 (이걸 계속 복제해서 무한 스크롤처럼 보이게 함)
+// 기본 목 데이터 (무한 스크롤용)
 const baseMockPins = [
   { id: 1, imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80", title: "모던 인테리어", description: "심플하고 세련된 거실", author: "인테리어 스튜디오", category: "인테리어" },
   { id: 2, imageUrl: "https://images.unsplash.com/photo-1532980400857-e8d9d275d858?auto=format&fit=crop&w=800&q=80", title: "푸드 스타일링", description: "맛있는 음식 사진", author: "푸드 포토그래퍼", category: "음식" },
@@ -31,43 +30,37 @@ const baseMockPins = [
 ];
 
 function AppContent() {
-  // 상태 관리
   const [selectedPin, setSelectedPin] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("전체");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState("login"); // 로그인/가입 모드
+  const [authModalMode, setAuthModalMode] = useState("login");
   const [showProfile, setShowProfile] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
-  // 무한 스크롤을 위한 상태
-  const [displayedPins, setDisplayedPins] = useState([]); // 현재 화면에 보여줄 핀들
-  const [page, setPage] = useState(1); // 현재 페이지 번호
-  const loadMoreRef = useRef(null); // 바닥 감지 센서 (Ref)
+  const [displayedPins, setDisplayedPins] = useState([]);
+  const [page, setPage] = useState(1);
+  const loadMoreRef = useRef(null);
 
   const { user, myPins } = useUser();
 
-  // 1. 핀 공장: 페이지가 넘어갈 때마다 새로운 핀 데이터를 생성 (기존 데이터를 재활용)
   const generateMorePins = (pageNum) => {
     const startId = (pageNum - 1) * baseMockPins.length;
     return baseMockPins.map((pin, index) => ({
       ...pin,
-      id: startId + index + 1000 + Math.random(), // 랜덤 숫자를 더해 ID 중복 방지
-      title: `${pin.title} (${pageNum})`, // 제목 뒤에 번호를 붙여서 새로움을 줌
+      id: startId + index + 1000 + Math.random(),
+      title: `${pin.title} (${pageNum})`,
     }));
   };
 
-  // 2. 초기 로딩: 처음엔 기본 데이터만 보여줌
   useEffect(() => {
     setDisplayedPins([...baseMockPins]);
   }, []);
 
-  // 3. 감시자(Observer) 설치: 화면 바닥(loadMoreRef)이 보이는지 감시
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // 바닥이 보이면(isIntersecting) 페이지 번호를 1 올림
         if (entries[0].isIntersecting) {
           setPage((prev) => prev + 1);
         }
@@ -79,10 +72,9 @@ function AppContent() {
       observer.observe(loadMoreRef.current);
     }
 
-    return () => observer.disconnect(); // 청소
+    return () => observer.disconnect();
   }, []);
 
-  // 4. 페이지가 바뀌면 핀 공장 가동 -> 목록에 추가
   useEffect(() => {
     if (page > 1) {
       const newPins = generateMorePins(page);
@@ -90,10 +82,8 @@ function AppContent() {
     }
   }, [page]);
 
-  // 전체 핀 합치기 (내 핀 + 무한 스크롤 핀)
   const allPins = [...myPins, ...displayedPins];
 
-  // 검색 및 카테고리 필터링
   const filteredPins = allPins.filter((pin) => {
     const matchesSearch = pin.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pin.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -111,7 +101,6 @@ function AppContent() {
     setShowAuthModal(true);
   };
 
-  // 🚀 [중요] 로그인하지 않은 경우 랜딩 페이지 표시
   if (!user) {
     return (
       <>
@@ -119,7 +108,6 @@ function AppContent() {
           onLoginClick={handleLoginClick}
           onSignUpClick={handleSignUpClick}
         />
-        {/* 로그인/회원가입 모달은 랜딩 페이지 위에도 뜰 수 있어야 함 */}
         {showAuthModal && (
           <AuthModal
             onClose={() => setShowAuthModal(false)}
@@ -131,7 +119,6 @@ function AppContent() {
     );
   }
 
-  // 로그인 한 경우 메인 앱 표시
   return (
     <div className="min-h-screen bg-white">
       <Header
@@ -151,15 +138,10 @@ function AppContent() {
           >
             ← 홈으로
           </button>
-          {/* allPins 데이터를 넘겨줘야 필터링이 가능합니다! */}
-          <ProfilePage
-            allPins={allPins}
-            onPinClick={setSelectedPin}
-          />
+          <ProfilePage allPins={allPins} onPinClick={setSelectedPin} />
         </div>
       ) : (
         <main className="container mx-auto px-4 py-6">
-          {/* Masonry 레이아웃 */}
           <Masonry columnsCount={3} gutter="16px">
             {filteredPins.map((pin) => (
               <PinCard
@@ -169,8 +151,6 @@ function AppContent() {
               />
             ))}
           </Masonry>
-
-          {/* 👇 여기가 무한 스크롤의 핵심! 바닥 감지 센서 & 로딩 스피너 */}
           <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
           </div>

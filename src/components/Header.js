@@ -6,7 +6,7 @@ const categories = [
     "여행", "아트", "건축", "동물", "피트니스",
 ];
 
-export function Header({ onSearch, activeCategory, onCategoryChange, onProfileClick, onLoginClick, onCreateClick }) {
+export function Header({ onSearch, activeCategory, onCategoryChange, onProfileClick, onLoginClick, onCreateClick , onHomeClick}) {
     const { user, logout } = useUser();
 
     return (
@@ -23,10 +23,24 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
 
                     {/* 네비게이션 */}
                     <nav className="hidden md:flex gap-2">
+<<<<<<< HEAD
                         <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-full bg-black text-white font-semibold">홈</button>
                         <button className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors font-semibold">탐색</button>
+=======
+                        <button className="px-4 py-2 rounded-full bg-black text-white font-semibold">
+                            홈
+                        </button>
+
+                        <button className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors font-semibold">
+                            탐색
+                        </button>
+
+>>>>>>> dev2
                         {user && (
-                            <button onClick={onCreateClick} className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2 font-semibold">
+                            <button
+                                onClick={onCreateClick}
+                                className="px-4 py-2 rounded-full hover:bg-gray-100 transition-colors flex items-center gap-2 font-semibold"
+                            >
                                 <Plus className="w-4 h-4" /> 만들기
                             </button>
                         )}
@@ -60,7 +74,13 @@ export function Header({ onSearch, activeCategory, onCategoryChange, onProfileCl
                                     className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 border border-transparent hover:border-gray-400 transition-all"
                                     title="프로필 보기"
                                 >
+<<<<<<< HEAD
                                     <span className="font-bold text-gray-700">{user.name?.[0] || "U"}</span>
+=======
+                                    <span className="font-bold text-gray-700">
+                                      {(user.username?.[0] || user.email?.[0] || "U").toUpperCase()}
+                                    </span>
+>>>>>>> dev2
                                 </div>
                                 <button onClick={logout} className="text-xs text-gray-500 hover:text-red-600 hover:underline ml-1">
                                     로그아웃

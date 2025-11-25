@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useUser } from "../contexts/UserContext"; // 여기서 진짜 기능을 가져옴
+import { useUser } from "../contexts/UserContext";
+import { signupAPI } from "../api/users";
 import { toast } from "sonner";
 
 export function AuthModal({ onClose, initialMode = "login" }) {
@@ -9,27 +10,32 @@ export function AuthModal({ onClose, initialMode = "login" }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    // ✅ 중요: UserContext 안에 있는 진짜 login, signup 함수를 가져옵니다!
-    const { login, signup } = useUser();
+
+    const { login } = useUser();
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+      e.preventDefault();
 
-        try {
-            if (mode === "login") {
-                // 진짜 로그인 함수 실행
-                await login(email, password);
-                toast.success("로그인 성공!");
-            } else {
-                // 진짜 회원가입 함수 실행
-                await signup(name, email, password);
-                toast.success("회원가입 환영합니다!");
-            }
-            onClose(); // 창 닫기
-        } catch (error) {
-            console.error(error);
-            toast.error("오류가 발생했습니다.");
+      try {
+        if (mode === "login") {
+          await login(email, password);
+          toast.success("로그인 성공!");
+        } else {
+          await signupAPI({
+            email,
+            username: name,
+            password,
+          });
+
+          await login(email, password);
+          toast.success("회원가입 + 로그인 완료!");
         }
+
+        onClose();
+      } catch (error) {
+        console.error(error);
+        toast.error("오류가 발생했습니다.");
+      }
     };
 
     return (
