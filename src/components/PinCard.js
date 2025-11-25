@@ -2,62 +2,43 @@ import { useState } from "react";
 import { Heart, Share2 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
-import { likePinAPI } from "../api/likes";
 
-type PinCardProps = {
-  id: number;
-  imageUrl?: string | null;
-  title: string;
-  author: string;
-  onClick: () => void;
-};
+export function PinCard({ id, imageUrl, title, author, onClick }) {
+  const { user, savedPins, likedPins, savePin, unsavePin, likePin, unlikePin } = useUser();
 
-export function PinCard({ id, imageUrl, title, author, onClick }: PinCardProps) {
-  const { user } = useUser();
+  // 백엔드 로직과 동일하게 (좋아요, 저장 상태 확인)
+  // (user?.id 가 없을 수도 있으니 안전하게 처리)
+  const isSaved = savedPins && savedPins.includes(id);
+  const isLiked = likedPins && likedPins.includes(id);
 
-  const [isSaved, setIsSaved] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  // 이미지 엑박 방지 (fallback)
+  const displayImageUrl = imageUrl && imageUrl.trim() !== "" ? imageUrl : "https://via.placeholder.com/300?text=No+Image";
 
-  // fallback 설정
-  const fallbackImage = "/dummy.jpg";
-  const displayImageUrl =
-    imageUrl && imageUrl.trim() !== "" ? imageUrl : fallbackImage;
-
-  const handleSave = (e: React.MouseEvent) => {
+  const handleSave = (e) => {
     e.stopPropagation();
     if (!user) {
       toast.error("로그인이 필요합니다.");
       return;
     }
-
     if (isSaved) {
-      setIsSaved(false);
+      unsavePin(id);
       toast.success("저장 취소되었습니다.");
     } else {
-      setIsSaved(true);
+      savePin(id);
       toast.success("핀이 저장되었습니다!");
     }
   };
 
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = (e) => {
     e.stopPropagation();
     if (!user) {
       toast.error("로그인이 필요합니다.");
       return;
     }
-
     if (isLiked) {
-      toast.message("이미 좋아요한 핀입니다.");
-      return;
-    }
-
-    try {
-      await likePinAPI(id, user.user_id);
-      setIsLiked(true);
-      toast.success("좋아요!");
-    } catch (err) {
-      console.error(err);
-      toast.error("좋아요 처리 중 오류가 발생했습니다.");
+      unlikePin(id);
+    } else {
+      likePin(id);
     }
   };
 
@@ -67,21 +48,51 @@ export function PinCard({ id, imageUrl, title, author, onClick }: PinCardProps) 
       onClick={onClick}
     >
       <div className="relative overflow-hidden rounded-2xl">
+        {/* 이미지 */}
         <img
           src={displayImageUrl}
           alt={title}
           className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
-          onError={(e) => {
-            const target = e.currentTarget;
-            // 무한 루프 방지용 체크
-            if (!target.src.endsWith(fallbackImage)) {
-              target.src = fallbackImage;
-            }
-          }}
+          onError={(e) => { e.target.src = "https://via.placeholder.com/300?text=Error"; }}
         />
 
-        {/* 이하 기존 코드 그대로... */}
+        {/* 호버 시 나타나는 오버레이 */}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleLike}
+              className={`rounded-full p-2 hover:bg-gray-100 transition-colors ${isLiked ? "bg-red-100 text-red-600" : "bg-white text-gray-800"
+                }`}
+            >
+              <Heart className={`w-5 h-5 ${isLiked ? "fill-red-600" : ""}`} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(`https://pinterest.com/pin/${id}`);
+                toast.success("링크 복사 완료!");
+              }}
+              className="bg-white rounded-full p-2 hover:bg-gray-100 transition-colors"
+            >
+              <Share2 className="w-5 h-5 text-gray-800" />
+            </button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="text-white overflow-hidden w-2/3">
+              <p className="truncate font-medium text-sm">{title}</p>
+            </div>
+            <button
+              onClick={handleSave}
+              className={`px-4 py-2 rounded-full transition-colors text-sm font-bold ${isSaved
+                  ? "bg-black text-white hover:bg-gray-900"
+                  : "bg-red-600 text-white hover:bg-red-700"
+                }`}
+            >
+              {isSaved ? "저장됨" : "저장"}
+            </button>
+          </div>
+        </div>
       </div>
       <div className="mt-2 px-2">
         <p className="text-gray-900 font-semibold text-sm truncate">{title}</p>
